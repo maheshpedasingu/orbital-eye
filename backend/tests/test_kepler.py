@@ -1,4 +1,6 @@
-from app.orbit.kepler import orbital_period_s
+﻿import math
+
+from app.orbit.kepler import orbital_period_s, position_eci_km
 
 
 def test_period_at_700km_is_about_98_6_minutes():
@@ -13,3 +15,22 @@ def test_higher_orbit_has_longer_period():
 def test_geostationary_altitude_gives_one_sidereal_day():
     # 35786 km altitude should give ~86164 s (one sidereal day)
     assert abs(orbital_period_s(35786.0) - 86164.0) < 60.0
+
+
+def test_start_is_at_x_axis():
+    x, y, z = position_eci_km(700.0, 98.0, 0.0)
+    assert abs(x - (6378.137 + 700.0)) < 1e-6
+    assert abs(y) < 1e-6 and abs(z) < 1e-6
+
+
+def test_distance_from_center_is_constant():
+    a = 6378.137 + 700.0
+    for t in (0, 500, 1234, 3000, 5000):
+        x, y, z = position_eci_km(700.0, 98.0, t)
+        assert abs(math.sqrt(x * x + y * y + z * z) - a) < 1e-6
+
+
+def test_returns_to_start_after_one_period():
+    period = orbital_period_s(700.0)
+    x, y, z = position_eci_km(700.0, 98.0, period)
+    assert abs(x - (6378.137 + 700.0)) < 1e-6
