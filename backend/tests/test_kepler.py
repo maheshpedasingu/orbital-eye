@@ -1,5 +1,13 @@
 ﻿import math
 
+
+from app.orbit.kepler import (
+    ecef_to_lat_lon_deg,
+    eci_to_ecef_km,
+    orbital_period_s,
+    position_eci_km,
+)
+
 from app.orbit.kepler import orbital_period_s, position_eci_km
 
 
@@ -34,3 +42,22 @@ def test_returns_to_start_after_one_period():
     period = orbital_period_s(700.0)
     x, y, z = position_eci_km(700.0, 98.0, period)
     assert abs(x - (6378.137 + 700.0)) < 1e-6
+
+
+def test_equator_point_has_zero_latitude():
+    lat, lon = ecef_to_lat_lon_deg(7000.0, 0.0, 0.0)
+    assert abs(lat) < 1e-9 and abs(lon) < 1e-9
+
+
+def test_north_pole_is_90_degrees():
+    lat, _ = ecef_to_lat_lon_deg(0.0, 0.0, 7000.0)
+    assert abs(lat - 90.0) < 1e-9
+
+
+def test_no_rotation_at_t0():
+    assert eci_to_ecef_km(1.0, 2.0, 3.0, 0.0) == (1.0, 2.0, 3.0)
+
+
+def test_one_sidereal_day_returns_to_same_point():
+    x, y, z = eci_to_ecef_km(7000.0, 0.0, 0.0, 86164.0905)
+    assert abs(x - 7000.0) < 1.0 and abs(y) < 1.0
