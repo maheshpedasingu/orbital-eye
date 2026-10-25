@@ -4,6 +4,7 @@
 from app.orbit.kepler import (
     ecef_to_lat_lon_deg,
     eci_to_ecef_km,
+    ground_track,
     orbital_period_s,
     position_eci_km,
 )
@@ -61,3 +62,25 @@ def test_no_rotation_at_t0():
 def test_one_sidereal_day_returns_to_same_point():
     x, y, z = eci_to_ecef_km(7000.0, 0.0, 0.0, 86164.0905)
     assert abs(x - 7000.0) < 1.0 and abs(y) < 1.0
+
+
+def test_ground_track_point_count():
+    points = ground_track(700.0, 98.0, 600.0, 60.0)
+    assert len(points) == 11
+
+
+def test_ground_track_latitude_never_exceeds_limit():
+    # Max latitude of an orbit with inclination 98 deg is 180 - 98 = 82 deg
+    points = ground_track(700.0, 98.0, 6000.0, 30.0)
+    assert max(abs(p["lat_deg"]) for p in points) <= 82.0 + 1e-6
+
+
+def test_ground_track_point_count():
+    points = ground_track(700.0, 98.0, 600.0, 60.0)
+    assert len(points) == 11
+
+
+def test_ground_track_latitude_never_exceeds_limit():
+    # Max latitude of an orbit with inclination 98 deg is 180 - 98 = 82 deg
+    points = ground_track(700.0, 98.0, 6000.0, 30.0)
+    assert max(abs(p["lat_deg"]) for p in points) <= 82.0 + 1e-6

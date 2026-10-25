@@ -58,3 +58,26 @@ def ecef_to_lat_lon_deg(x: float, y: float, z: float) -> tuple[float, float]:
     lon = math.degrees(math.atan2(y, x))        # angle east/west of the x-axis
 
     return (lat, lon)
+
+
+def ground_track(
+    altitude_km: float, inclination_deg: float, duration_s: float, step_s: float
+) -> list[dict]:
+    """Sub-satellite points (idealized circular orbit, spherical Earth).
+
+    Units: t_s in seconds, lat_deg/lon_deg in degrees, alt_km in km.
+    """
+    if step_s <= 0 or duration_s < 0:
+        raise ValueError("step_s must be > 0 and duration_s must be >= 0")
+
+    points = []
+    count = int(duration_s // step_s) + 1
+    for k in range(count):
+        t = k * step_s
+        x, y, z = position_eci_km(altitude_km, inclination_deg, t)
+        xe, ye, ze = eci_to_ecef_km(x, y, z, t)
+        lat, lon = ecef_to_lat_lon_deg(xe, ye, ze)
+        points.append(
+            {"t_s": t, "lat_deg": lat, "lon_deg": lon, "alt_km": altitude_km}
+        )
+    return points
