@@ -41,7 +41,16 @@ export default function EarthView() {
         new THREE.MeshBasicMaterial({ color: 0x1f6f8b, wireframe: true })
       )
     );
+    const marker = new THREE.Mesh(
+      new THREE.SphereGeometry(0.02, 16, 16),
+      new THREE.MeshBasicMaterial({ color: 0x7cfc00 })
+    );
+    marker.visible = false;
+    scene.add(marker);
 
+    let pts: THREE.Vector3[] = [];
+    let times: number[] = [];
+    const SPEED = 60; // simulated seconds per real second
     let cancelled = false;
     fetch("/api/orbit/ground-track")
       .then((r) => {
@@ -50,7 +59,9 @@ export default function EarthView() {
       })
       .then((data) => {
         if (cancelled) return;
-        const pts = (data.points as TrackPoint[]).map((p) =>
+        const track = data.points as TrackPoint[];
+        times = track.map((p) => p.t_s);
+        pts = track.map((p) =>
           latLonToVector3(p.lat_deg, p.lon_deg, (EARTH_RADIUS_KM + p.alt_km) / EARTH_RADIUS_KM)
         );
         const line = new THREE.Line(
@@ -58,14 +69,23 @@ export default function EarthView() {
           new THREE.LineBasicMaterial({ color: 0x00e5ff })
         );
         scene.add(line);
+        marker.visible = true;
         setStatus(`${data.data_origin} ground track: ${data.point_count} points`);
       })
       .catch((e) => {
         if (!cancelled) setStatus(`Could not load ground track: ${e.message}`);
       });
 
+    const startTime = performance.now();
     let frameId = 0;
     const animate = () => {
+      if (pts.length > 1) {
+        const total = times[times.length - 1];
+        const t = (((performance.now() - startTime) / 1000) * SPEED) % total;
+        const i = Math.min(Math.floor(t / (times[1] - times[0])), pts.length - 2);
+        const f = (t - times[i]) / (times[i + 1] - times[i]);
+        marker.position.copy(pts[i]).lerp(pts[i + 1], f);
+      }
       controls.update();
       renderer.render(scene, camera);
       frameId = requestAnimationFrame(animate);
