@@ -2,7 +2,7 @@
 
 from fastapi import FastAPI, Query
 
-from app.orbit.kepler import ground_track, orbital_period_s
+from app.orbit.kepler import circular_speed_km_s, ground_track, orbital_period_s
 
 app = FastAPI(title="ORBITAL-EYE API", version="0.1.0")
 
@@ -32,6 +32,7 @@ def get_ground_track(
         "model": "idealized circular two-body orbit, spherical Earth, "
                  "Earth-fixed frame aligned with inertial at t=0",
         "period_s": period_s,
+        "speed_km_s": circular_speed_km_s(altitude_km),
         "point_count": len(points),
         "points": points,
     }

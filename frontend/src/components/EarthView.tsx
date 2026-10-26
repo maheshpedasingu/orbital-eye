@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+﻿import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { latLonToVector3 } from "../lib/geo";
@@ -6,10 +6,12 @@ import { latLonToVector3 } from "../lib/geo";
 const EARTH_RADIUS_KM = 6378.137;
 
 type TrackPoint = { t_s: number; lat_deg: number; lon_deg: number; alt_km: number };
+type Telemetry = TrackPoint & { speed_km_s: number };
 
 export default function EarthView() {
   const mountRef = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState("Loading ground track...");
+  const [telemetry, setTelemetry] = useState<Telemetry | null>(null);
 
   useEffect(() => {
     const mount = mountRef.current;
@@ -41,6 +43,7 @@ export default function EarthView() {
         new THREE.MeshBasicMaterial({ color: 0x1f6f8b, wireframe: true })
       )
     );
+
     const marker = new THREE.Mesh(
       new THREE.SphereGeometry(0.02, 16, 16),
       new THREE.MeshBasicMaterial({ color: 0x7cfc00 })
@@ -48,9 +51,13 @@ export default function EarthView() {
     marker.visible = false;
     scene.add(marker);
 
+    let samples: TrackPoint[] = [];
     let pts: THREE.Vector3[] = [];
     let times: number[] = [];
+    let speedKmS = 0;
+    let lastIndex = -1;
     const SPEED = 60; // simulated seconds per real second
+
     let cancelled = false;
     fetch("/api/orbit/ground-track")
       .then((r) => {
@@ -59,9 +66,10 @@ export default function EarthView() {
       })
       .then((data) => {
         if (cancelled) return;
-        const track = data.points as TrackPoint[];
-        times = track.map((p) => p.t_s);
-        pts = track.map((p) =>
+        samples = data.points as TrackPoint[];
+        speedKmS = data.speed_km_s as number;
+        times = samples.map((p) => p.t_s);
+        pts = samples.map((p) =>
           latLonToVector3(p.lat_deg, p.lon_deg, (EARTH_RADIUS_KM + p.alt_km) / EARTH_RADIUS_KM)
         );
         const line = new THREE.Line(
@@ -85,6 +93,10 @@ export default function EarthView() {
         const i = Math.min(Math.floor(t / (times[1] - times[0])), pts.length - 2);
         const f = (t - times[i]) / (times[i + 1] - times[i]);
         marker.position.copy(pts[i]).lerp(pts[i + 1], f);
+        if (i !== lastIndex) {
+          lastIndex = i;
+          setTelemetry({ ...samples[i], speed_km_s: speedKmS });
+        }
       }
       controls.update();
       renderer.render(scene, camera);
@@ -101,9 +113,35 @@ export default function EarthView() {
     };
   }, []);
 
+  const row = { display: "flex", justifyContent: "space-between", gap: 16 } as const;
+
   return (
     <div>
-      <div ref={mountRef} style={{ width: "100%", height: 500 }} />
+      <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
+        <div ref={mountRef} style={{ flex: 1, minWidth: 0, height: 500 }} />
+        <div
+          style={{
+            width: 260,
+            padding: 12,
+            border: "1px solid #1f6f8b",
+            fontFamily: "monospace",
+            fontSize: 14,
+          }}
+        >
+          <div style={{ color: "#00e5ff", marginBottom: 8 }}>TELEMETRY (SIMULATED)</div>
+          {telemetry ? (
+            <>
+              <div style={row}><span>Sim time</span><span>{telemetry.t_s.toFixed(0)} s</span></div>
+              <div style={row}><span>Latitude</span><span>{telemetry.lat_deg.toFixed(2)}&deg;</span></div>
+              <div style={row}><span>Longitude</span><span>{telemetry.lon_deg.toFixed(2)}&deg;</span></div>
+              <div style={row}><span>Altitude</span><span>{telemetry.alt_km.toFixed(1)} km</span></div>
+              <div style={row}><span>Speed</span><span>{telemetry.speed_km_s.toFixed(3)} km/s</span></div>
+            </>
+          ) : (
+            <div>Waiting for data...</div>
+          )}
+        </div>
+      </div>
       <p>{status}</p>
     </div>
   );

@@ -2,6 +2,7 @@
 
 
 from app.orbit.kepler import (
+    circular_speed_km_s,
     ecef_to_lat_lon_deg,
     eci_to_ecef_km,
     ground_track,
@@ -84,3 +85,13 @@ def test_ground_track_latitude_never_exceeds_limit():
     # Max latitude of an orbit with inclination 98 deg is 180 - 98 = 82 deg
     points = ground_track(700.0, 98.0, 6000.0, 30.0)
     assert max(abs(p["lat_deg"]) for p in points) <= 82.0 + 1e-6
+
+
+def test_circular_speed_at_700km():
+    assert abs(circular_speed_km_s(700.0) - 7.504) < 0.01
+
+
+def test_speed_times_period_is_circumference():
+    a = 6378.137 + 700.0
+    distance = circular_speed_km_s(700.0) * orbital_period_s(700.0)
+    assert abs(distance - 2 * math.pi * a) < 1e-6

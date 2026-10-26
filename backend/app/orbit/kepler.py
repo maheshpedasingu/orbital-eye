@@ -81,3 +81,8 @@ def ground_track(
             {"t_s": t, "lat_deg": lat, "lon_deg": lon, "alt_km": altitude_km}
         )
     return points
+
+def circular_speed_km_s(altitude_km: float) -> float:
+    """Speed (km/s) of a circular orbit at this altitude: v = sqrt(mu / a)."""
+    a = EARTH_RADIUS_KM + altitude_km
+    return math.sqrt(MU_EARTH_KM3_S2 / a)
