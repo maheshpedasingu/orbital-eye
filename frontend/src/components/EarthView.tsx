@@ -8,10 +8,38 @@ const EARTH_RADIUS_KM = 6378.137;
 type TrackPoint = { t_s: number; lat_deg: number; lon_deg: number; alt_km: number };
 type Telemetry = TrackPoint & { speed_km_s: number };
 
+function toVectors(points: TrackPoint[]): THREE.Vector3[] {
+  return points.map((p) =>
+    latLonToVector3(p.lat_deg, p.lon_deg, (EARTH_RADIUS_KM + p.alt_km) / EARTH_RADIUS_KM)
+  );
+}
+
+function makeLine(pts: THREE.Vector3[], color: number, visible: boolean): THREE.Line {
+  const line = new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints(pts),
+    new THREE.LineBasicMaterial({ color })
+  );
+  line.visible = visible;
+  return line;
+}
+
 export default function EarthView() {
   const mountRef = useRef<HTMLDivElement>(null);
-  const [status, setStatus] = useState("Loading ground track...");
+  const idealLineRef = useRef<THREE.Line | null>(null);
+  const sgp4LineRef = useRef<THREE.Line | null>(null);
+  const visRef = useRef({ ideal: true, sgp4: true });
+
+  const [idealStatus, setIdealStatus] = useState("Idealized track: loading...");
+  const [sgp4Status, setSgp4Status] = useState("SGP4 track: loading...");
   const [telemetry, setTelemetry] = useState<Telemetry | null>(null);
+  const [showIdeal, setShowIdeal] = useState(true);
+  const [showSgp4, setShowSgp4] = useState(true);
+
+  useEffect(() => {
+    visRef.current = { ideal: showIdeal, sgp4: showSgp4 };
+    if (idealLineRef.current) idealLineRef.current.visible = showIdeal;
+    if (sgp4LineRef.current) sgp4LineRef.current.visible = showSgp4;
+  }, [showIdeal, showSgp4]);
 
   useEffect(() => {
     const mount = mountRef.current;
@@ -59,7 +87,9 @@ export default function EarthView() {
     const SPEED = 60; // simulated seconds per real second
 
     let cancelled = false;
-    fetch("/api/orbit/ground-track")
+
+    // Idealized circular orbit, same altitude/inclination as the ISS fixture TLE
+    fetch("/api/orbit/ground-track?altitude_km=420&inclination_deg=51.6439&step_s=60")
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();
@@ -69,24 +99,43 @@ export default function EarthView() {
         samples = data.points as TrackPoint[];
         speedKmS = data.speed_km_s as number;
         times = samples.map((p) => p.t_s);
-        pts = samples.map((p) =>
-          latLonToVector3(p.lat_deg, p.lon_deg, (EARTH_RADIUS_KM + p.alt_km) / EARTH_RADIUS_KM)
-        );
-        const line = new THREE.Line(
-          new THREE.BufferGeometry().setFromPoints(pts),
-          new THREE.LineBasicMaterial({ color: 0x00e5ff })
-        );
+        pts = toVectors(samples);
+        const line = makeLine(pts, 0x00e5ff, visRef.current.ideal);
+        idealLineRef.current = line;
         scene.add(line);
-        marker.visible = true;
-        setStatus(`${data.data_origin} ground track: ${data.point_count} points`);
+        setIdealStatus(`${data.data_origin} idealized track: ${data.point_count} points`);
       })
       .catch((e) => {
-        if (!cancelled) setStatus(`Could not load ground track: ${e.message}`);
+        if (!cancelled) setIdealStatus(`Idealized track failed: ${e.message}`);
+      });
+
+    // SGP4 track from the built-in test-fixture TLE
+    fetch("/api/orbit/tle-ground-track")
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
+      .then((data) => {
+        if (cancelled) return;
+        const line = makeLine(
+          toVectors(data.points as TrackPoint[]),
+          0xffb000,
+          visRef.current.sgp4
+        );
+        sgp4LineRef.current = line;
+        scene.add(line);
+        setSgp4Status(
+          `${data.data_origin} SGP4 track (${data.orbit_source}): ${data.point_count} points`
+        );
+      })
+      .catch((e) => {
+        if (!cancelled) setSgp4Status(`SGP4 track failed: ${e.message}`);
       });
 
     const startTime = performance.now();
     let frameId = 0;
     const animate = () => {
+      marker.visible = pts.length > 1 && visRef.current.ideal;
       if (pts.length > 1) {
         const total = times[times.length - 1];
         const t = (((performance.now() - startTime) / 1000) * SPEED) % total;
@@ -121,14 +170,16 @@ export default function EarthView() {
         <div ref={mountRef} style={{ flex: 1, minWidth: 0, height: 500 }} />
         <div
           style={{
-            width: 260,
+            width: 280,
             padding: 12,
             border: "1px solid #1f6f8b",
             fontFamily: "monospace",
             fontSize: 14,
           }}
         >
-          <div style={{ color: "#00e5ff", marginBottom: 8 }}>TELEMETRY (SIMULATED)</div>
+          <div style={{ color: "#00e5ff", marginBottom: 8 }}>
+            TELEMETRY (SIMULATED, idealized orbit)
+          </div>
           {telemetry ? (
             <>
               <div style={row}><span>Sim time</span><span>{telemetry.t_s.toFixed(0)} s</span></div>
@@ -140,9 +191,28 @@ export default function EarthView() {
           ) : (
             <div>Waiting for data...</div>
           )}
+
+          <div style={{ color: "#00e5ff", margin: "16px 0 8px" }}>LAYERS</div>
+          <label style={{ display: "block", color: "#00e5ff" }}>
+            <input
+              type="checkbox"
+              checked={showIdeal}
+              onChange={(e) => setShowIdeal(e.target.checked)}
+            />{" "}
+            Idealized circular orbit
+          </label>
+          <label style={{ display: "block", color: "#ffb000" }}>
+            <input
+              type="checkbox"
+              checked={showSgp4}
+              onChange={(e) => setShowSgp4(e.target.checked)}
+            />{" "}
+            SGP4 (fixture TLE, Dec 2019)
+          </label>
         </div>
       </div>
-      <p>{status}</p>
+      <p style={{ margin: "8px 0 0" }}>{idealStatus}</p>
+      <p style={{ margin: "4px 0 0" }}>{sgp4Status}</p>
     </div>
   );
 }
