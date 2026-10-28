@@ -1,0 +1,24 @@
+﻿{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Vijayawada AOI (approximate)",
+        "centre_lat_deg": 16.506,
+        "centre_lon_deg": 80.648,
+        "note": "Approximate box, coordinates are [lon, lat]. Verify before use."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [80.498, 16.356],
+          [80.798, 16.356],
+          [80.798, 16.656],
+          [80.498, 16.656],
+          [80.498, 16.356]
+        ]]
+      }
+    }
+  ]
+}

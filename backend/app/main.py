@@ -65,3 +65,8 @@ def get_tle_ground_track(
         "point_count": len(points),
         "points": points,
     }
+
+
+from app.aoi import router as aoi_router  # noqa: E402
+
+app.include_router(aoi_router)
