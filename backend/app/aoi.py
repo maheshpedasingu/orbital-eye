@@ -19,3 +19,16 @@ def get_aoi():
     """The configured area of interest. This is configuration, not observation data."""
     return {"data_origin": "CONFIG", "aoi": load_aoi()}
 
+
+
+def aoi_bbox(pad_deg: float = 0.0) -> tuple[float, float, float, float]:
+    """(west, south, east, north) in degrees around the AOI, plus a margin."""
+    ring = load_aoi()["features"][0]["geometry"]["coordinates"][0]
+    lons = [p[0] for p in ring]
+    lats = [p[1] for p in ring]
+    return (
+        round(min(lons) - pad_deg, 3),
+        round(min(lats) - pad_deg, 3),
+        round(max(lons) + pad_deg, 3),
+        round(max(lats) + pad_deg, 3),
+    )
