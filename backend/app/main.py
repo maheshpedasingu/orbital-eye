@@ -70,3 +70,8 @@ def get_tle_ground_track(
 from app.aoi import router as aoi_router  # noqa: E402
 
 app.include_router(aoi_router)
+
+
+from app.footprint_api import router as footprint_router  # noqa: E402
+
+app.include_router(footprint_router)
