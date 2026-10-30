@@ -75,3 +75,8 @@ app.include_router(aoi_router)
 from app.footprint_api import router as footprint_router  # noqa: E402
 
 app.include_router(footprint_router)
+
+
+from app.fires_api import router as fires_router  # noqa: E402
+
+app.include_router(fires_router)
