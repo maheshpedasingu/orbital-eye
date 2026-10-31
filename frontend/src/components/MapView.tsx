@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -146,7 +146,55 @@ export default function MapView() {
       })
       .catch((e) => messages.push(`Fires failed: ${e.message}`));
 
-    Promise.all([aoiRequest, trackRequest, fireRequest]).then(() => {
+    const vegRequest = getJson("/api/vegetation/latest")
+      .then((data) => {
+        if (cancelled) return;
+        if (data.status !== "ok") {
+          messages.push(`NDVI: ${data.message}`);
+          return;
+        }
+        const b = data.bounds_lonlat as number[]; // west, south, east, north
+        const overlay = L.imageOverlay(
+          `${data.image_url}?v=${encodeURIComponent(data.scene_id)}`,
+          [[b[1], b[0]], [b[3], b[2]]],
+          { opacity: 0.8, attribution: data.attribution }
+        ).addTo(map);
+        layers.addOverlay(overlay, "NDVI (Sentinel-2, REAL_EXTERNAL)");
+
+        const cats = data.categories as { name: string; color: string; fraction: number | null }[];
+        const pct = (f: number | null) => (f === null ? "n/a" : `${(f * 100).toFixed(0)}%`);
+        const legend = new L.Control({ position: "bottomleft" });
+        legend.onAdd = () => {
+          const div = L.DomUtil.create("div");
+          div.style.cssText =
+            "background:rgba(20,22,28,0.92);color:#eee;padding:6px 8px;font:12px monospace;border-radius:4px;max-width:270px";
+          div.innerHTML =
+            `<b>NDVI (greenness index)</b><br/>` +
+            `Scene: ${esc(data.acquired_utc)}<br/>` +
+            `Usable pixels in AOI: ${pct(data.fraction_with_ndvi)}<br/>` +
+            cats
+              .map(
+                (c) =>
+                  `<span style="background:${esc(c.color)};display:inline-block;width:10px;height:10px"></span> ` +
+                  `${esc(c.name)}: ${pct(c.fraction)}`
+              )
+              .join("<br/>") +
+            `<br/>No colour = masked (cloud, cirrus, no data)<br/>` +
+            `Percentages are of usable pixels. Not a measure of crop health, yield or drought.`;
+          return div;
+        };
+        legend.addTo(map);
+
+        messages.push(
+          `${data.data_origin} NDVI: scene ${data.scene_id}, ${pct(data.fraction_with_ndvi)} of AOI usable`
+        );
+        if (data.last_run_status && data.last_run_status !== "ok") {
+          messages.push(`LAST NDVI RUN: ${data.last_run_status}`);
+        }
+      })
+      .catch((e) => messages.push(`NDVI failed: ${e.message}`));
+
+    Promise.all([aoiRequest, trackRequest, fireRequest, vegRequest]).then(() => {
       if (!cancelled) setStatus(messages.join(" | "));
     });
 

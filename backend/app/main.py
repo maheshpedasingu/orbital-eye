@@ -85,3 +85,8 @@ app.include_router(fires_router)
 from app.alerts_api import router as alerts_router  # noqa: E402
 
 app.include_router(alerts_router)
+
+
+from app.vegetation_api import router as vegetation_router  # noqa: E402
+
+app.include_router(vegetation_router)

@@ -24,9 +24,9 @@ EPS = 1e-6
 
 
 def window_for_native_bounds(ds, bounds):
-    """Pixel window for bounds given in the dataset's own CRS, clipped to the raster.
+    """Pixel window for bounds in the dataset's own CRS, clipped to the raster.
 
-    Returns (Window, coverage) where coverage is the fraction of the requested
+    Returns (Window, coverage); coverage is the fraction of the requested
     window that lies inside the raster (1.0 = fully covered).
     """
     west, south, east, north = bounds
@@ -75,7 +75,11 @@ def scale_offset(info):
     return info["scale"], info["offset"]
 
 
-def read_scene_ndvi(summary, bbox, decimate=4) -> dict:
+def compute_scene(summary, bbox, decimate=4) -> dict:
+    """Read red, NIR and SCL for the AOI and compute masked NDVI.
+
+    Returns {"values", "scl", "bounds_lonlat", "coverage"}.
+    """
     bands = summary["bands"]
     r_scale, r_off = scale_offset(bands["red"])
     n_scale, n_off = scale_offset(bands["nir"])
@@ -109,11 +113,20 @@ def read_scene_ndvi(summary, bbox, decimate=4) -> dict:
 
     red = np.where(red_dn > 0, red_dn * r_scale + r_off, np.nan)
     nir = np.where(nir_dn > 0, nir_dn * n_scale + n_off, np.nan)
-    scl_valid = np.isin(scl, VALID_SCL)
-    valid = scl_valid & (red_dn > 0) & (nir_dn > 0)
-    values = ndvi(red, nir, valid)
+    valid = np.isin(scl, VALID_SCL) & (red_dn > 0) & (nir_dn > 0)
+    return {
+        "values": ndvi(red, nir, valid),
+        "scl": scl,
+        "bounds_lonlat": tuple(float(v) for v in bounds_lonlat),
+        "coverage": float(coverage),
+    }
 
+
+def summarize_arrays(summary, comp, decimate) -> dict:
+    """Statistics and quality figures for a computed scene."""
+    values, scl = comp["values"], comp["scl"]
     finite = values[np.isfinite(values)]
+    scl_valid = np.isin(scl, VALID_SCL)
     stats = None
     bins = None
     if finite.size:
@@ -133,10 +146,10 @@ def read_scene_ndvi(summary, bbox, decimate=4) -> dict:
         "scene_id": summary["id"],
         "acquired_utc": summary["datetime"],
         "scene_cloud_cover_percent": summary["cloud_cover"],
-        "aoi_coverage_fraction": round(float(coverage), 3),
+        "aoi_coverage_fraction": round(comp["coverage"], 3),
         "decimate": decimate,
-        "pixels": [int(shape[0]), int(shape[1])],
-        "bounds_lonlat": [round(v, 4) for v in bounds_lonlat],
+        "pixels": [int(values.shape[0]), int(values.shape[1])],
+        "bounds_lonlat": [round(v, 4) for v in comp["bounds_lonlat"]],
         "scl_fractions_in_aoi": {
             SCL_NAMES.get(int(c), f"class {int(c)}"): round(float(n) / scl.size, 3)
             for c, n in zip(classes, counts)
@@ -146,6 +159,10 @@ def read_scene_ndvi(summary, bbox, decimate=4) -> dict:
         "ndvi_stats": stats,
         "ndvi_class_fractions": bins,
     }
+
+
+def read_scene_ndvi(summary, bbox, decimate=4) -> dict:
+    return summarize_arrays(summary, compute_scene(summary, bbox, decimate), decimate)
 
 
 if __name__ == "__main__":

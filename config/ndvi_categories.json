@@ -1,0 +1,9 @@
+﻿{
+  "note": "Illustrative NDVI bands, not scientific land-cover classes. Bands must be contiguous.",
+  "categories": [
+    { "name": "Non-vegetated or water", "min": -1.0, "max": 0.2, "color": "#b08968" },
+    { "name": "Sparse vegetation",      "min": 0.2,  "max": 0.4, "color": "#e9c46a" },
+    { "name": "Moderate vegetation",    "min": 0.4,  "max": 0.6, "color": "#8ab17d" },
+    { "name": "Dense green vegetation", "min": 0.6,  "max": 1.0, "color": "#2a7f3f" }
+  ]
+}
