@@ -80,3 +80,8 @@ app.include_router(footprint_router)
 from app.fires_api import router as fires_router  # noqa: E402
 
 app.include_router(fires_router)
+
+
+from app.alerts_api import router as alerts_router  # noqa: E402
+
+app.include_router(alerts_router)

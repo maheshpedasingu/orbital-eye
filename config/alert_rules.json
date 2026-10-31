@@ -1,0 +1,12 @@
+﻿{
+  "max_age_hours": 24,
+  "near_km": 30,
+  "regional_km": 100,
+  "dedupe_radius_km": 1.0,
+  "dedupe_window_hours": 12,
+  "severity_matrix": {
+    "inside":   { "h": "CRITICAL", "n": "WARNING", "l": "INFO" },
+    "near":     { "h": "WARNING",  "n": "INFO",    "l": "INFO" },
+    "regional": { "h": "INFO",     "n": "INFO",    "l": null }
+  }
+}
