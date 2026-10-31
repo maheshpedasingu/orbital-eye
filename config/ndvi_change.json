@@ -1,0 +1,9 @@
+﻿{
+  "note": "Illustrative thresholds, not scientific classes. NDVI change is not a diagnosis.",
+  "decrease_threshold": -0.2,
+  "increase_threshold": 0.2,
+  "min_usable_fraction": 0.4,
+  "min_gap_days": 14,
+  "max_reference_tries": 3,
+  "colors": { "decrease": "#d73027", "stable": "#9e9e9e", "increase": "#1a9850" }
+}

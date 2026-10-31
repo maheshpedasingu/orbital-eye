@@ -194,7 +194,55 @@ export default function MapView() {
       })
       .catch((e) => messages.push(`NDVI failed: ${e.message}`));
 
-    Promise.all([aoiRequest, trackRequest, fireRequest, vegRequest]).then(() => {
+    const changeRequest = getJson("/api/vegetation/change/latest")
+      .then((data) => {
+        if (cancelled) return;
+        if (data.status !== "ok") {
+          messages.push(`NDVI change: ${data.message}`);
+          return;
+        }
+        const b = data.bounds_lonlat as number[]; // west, south, east, north
+        const overlay = L.imageOverlay(
+          `${data.image_url}?v=${encodeURIComponent(data.current.scene_id + data.reference.scene_id)}`,
+          [[b[1], b[0]], [b[3], b[2]]],
+          { opacity: 0.85, attribution: data.attribution }
+        );
+        layers.addOverlay(overlay, "NDVI change (REAL_EXTERNAL, tick to show)");
+
+        const f = data.class_fractions as Record<string, number | null>;
+        const pct = (v: number | null) => (v === null || v === undefined ? "n/a" : `${(v * 100).toFixed(0)}%`);
+        const swatch = (c: string) =>
+          `<span style="background:${esc(c)};display:inline-block;width:10px;height:10px"></span> `;
+        const legend = new L.Control({ position: "bottomleft" });
+        legend.onAdd = () => {
+          const div = L.DomUtil.create("div");
+          div.style.cssText =
+            "background:rgba(20,22,28,0.92);color:#eee;padding:6px 8px;font:12px monospace;border-radius:4px;max-width:290px";
+          div.innerHTML =
+            `<b>NDVI change</b><br/>` +
+            `${esc(String(data.reference.acquired_utc).slice(0, 10))} to ` +
+            `${esc(String(data.current.acquired_utc).slice(0, 10))} (${esc(data.days_between)} days)<br/>` +
+            `Comparable pixels in AOI: ${pct(data.overlap_fraction)}<br/>` +
+            `${swatch(data.colors.decrease)}Decrease (${esc(data.thresholds.decrease)} or lower): ${pct(f.decrease)}<br/>` +
+            `${swatch(data.colors.stable)}Little change: ${pct(f.stable)}<br/>` +
+            `${swatch(data.colors.increase)}Increase (+${esc(data.thresholds.increase)} or higher): ${pct(f.increase)}<br/>` +
+            `No colour = not comparable (cloud or cirrus on either date)<br/>` +
+            `Percentages are of comparable pixels. Harvest, ploughing, flooding, haze and season all change NDVI; this is not a diagnosis.`;
+          return div;
+        };
+        map.on("overlayadd", (e: L.LayersControlEvent) => {
+          if (e.layer === overlay) legend.addTo(map);
+        });
+        map.on("overlayremove", (e: L.LayersControlEvent) => {
+          if (e.layer === overlay) legend.remove();
+        });
+        messages.push(
+          `${data.data_origin} NDVI change: ${pct(data.overlap_fraction)} of AOI comparable`
+        );
+      })
+      .catch((e) => messages.push(`NDVI change failed: ${e.message}`));
+
+    Promise.all([aoiRequest, trackRequest, fireRequest, vegRequest, changeRequest]).then(() => {
       if (!cancelled) setStatus(messages.join(" | "));
     });
 

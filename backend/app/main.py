@@ -90,3 +90,8 @@ app.include_router(alerts_router)
 from app.vegetation_api import router as vegetation_router  # noqa: E402
 
 app.include_router(vegetation_router)
+
+
+from app.change_api import router as change_router  # noqa: E402
+
+app.include_router(change_router)
