@@ -95,3 +95,8 @@ app.include_router(vegetation_router)
 from app.change_api import router as change_router  # noqa: E402
 
 app.include_router(change_router)
+
+
+from app.passes_api import router as passes_router  # noqa: E402
+
+app.include_router(passes_router)

@@ -44,3 +44,22 @@
 ## Not yet used
 
 NASA Earthdata products, MODIS imagery, CelesTrak TLEs, and Copernicus Data Space.
+## CelesTrak GP data (orbital elements) - REAL_EXTERNAL
+
+- Access: public HTTPS endpoint `https://celestrak.org/NORAD/elements/gp.php?CATNR=<n>&FORMAT=3LE`.
+  No key. We always send FORMAT explicitly: two CelesTrak pages disagree about the default
+  (TLE on one, CSV on another updated June 2026).
+- Used: Suomi NPP (37849) and Sentinel-2B (42063); the returned names matched on the first live fetch.
+- Policy: CelesTrak publishes a usage policy; the exact limits were NOT verified here. We fetch each
+  satellite at most once per 12 hours (failed attempts count) and store results in SQLite.
+- Limits: TLE format cannot carry 6-digit catalogue numbers (100000 and above); a TLE is only accurate
+  near its epoch. We refuse to predict from an element set older than 14 days.
+- A position computed from a TLE is a PREDICTION, labelled PROPAGATED_FROM_REAL_TLE.
+
+## Instrument swaths used for opportunity prediction
+
+- Sentinel-2 MSI: 290 km (several sources, including a NASA/UMD presentation). Half-swath 145 km.
+- VIIRS on Suomi NPP: about 3040 km (SSEC, NASA PO.DAAC GHRSST page) or 3060 km (Wikipedia, PO.DAAC).
+  We use a half-swath of 1520 km.
+- Local overpass times: Suomi NPP ascending node about 13:30 (SSEC). Sentinel-2 about 10:30 is an
+  unverified expectation.
