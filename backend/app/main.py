@@ -100,3 +100,8 @@ app.include_router(change_router)
 from app.passes_api import router as passes_router  # noqa: E402
 
 app.include_router(passes_router)
+
+
+from app.system_api import router as system_router  # noqa: E402
+
+app.include_router(system_router)

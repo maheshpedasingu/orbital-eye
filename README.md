@@ -52,3 +52,11 @@ Open http://localhost:5173. API docs: http://127.0.0.1:8000/docs
 
 `docs\ARCHITECTURE.md`, `ROADMAP.md`, `DATA_SOURCES.md`, `SCIENCE_AND_ASSUMPTIONS.md`,
 `TESTING.md`.
+## Automatic refresh
+
+    cd backend
+    .\.venv\Scripts\python.exe -m app.scheduler                    # run all due jobs once
+    .\.venv\Scripts\python.exe -m app.scheduler --loop-minutes 30  # keep running (Ctrl+C to stop)
+
+Intervals are constants at the top of `backend/app/scheduler.py`. Logs: `backend/data/logs/`.
+Status: http://127.0.0.1:8000/api/system/status
