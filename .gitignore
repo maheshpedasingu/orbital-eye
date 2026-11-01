@@ -5,3 +5,5 @@ node_modules/
 *.db
 dist/
 backend/data/
+flight_core/*.exe
+flight_core/*.obj
