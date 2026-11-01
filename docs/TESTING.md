@@ -71,3 +71,5 @@ A skipped test is not a pass: check that the pytest summary shows no skips.
 
 The C code is tested on a Windows laptop with GCC only. Nothing has been run on a target
 processor, under a real-time OS, with a hardware watchdog, or in a radiation environment.
+
+Last confirmed full run: 106 passed, no skips (2026-11-01).
