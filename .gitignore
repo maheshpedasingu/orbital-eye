@@ -7,3 +7,4 @@ dist/
 backend/data/
 flight_core/*.exe
 flight_core/*.obj
+flight_core/*.exe
