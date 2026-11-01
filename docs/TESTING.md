@@ -38,3 +38,36 @@ Run everything:
 2. Run `python -m app.alerts.simulate` and tick "Show simulated test events"; expect one
    CRITICAL alert with a merged repeat and one INFO alert, both badged SIMULATED.
 3. Run `python -m app.ingestion.run_firms` twice; the second run should add 0 new rows.
+## Flight-logic tests (C)
+
+Build and run each test program from the project root:
+
+    gcc -std=c99 -Wall -Wextra -Wpedantic -Werror -Iflight_core/include flight_core/src/telemetry.c flight_core/tests/test_telemetry.c -o flight_core/test_telemetry.exe
+    .\flight_core\test_telemetry.exe
+    gcc -std=c99 -Wall -Wextra -Wpedantic -Werror -Iflight_core/include flight_core/src/telemetry.c flight_core/src/health.c flight_core/tests/test_health.c -o flight_core/test_health.exe
+    .\flight_core\test_health.exe
+
+Each prints `N checks, M failed` and exits 0 only if nothing failed. The telemetry program
+printed `41 checks, 0 failed` when last confirmed.
+
+What they check: the CRC against the published check value (`123456789` gives `0x29B1`);
+packet bytes against a hand-computed byte sequence; round trips including negative
+temperature and range limits; detection of every single-bit corruption; rejection of wrong
+lengths, null pointers and out-of-range fields (including a packet with a valid CRC but an
+invalid field); health thresholds at exactly the limit and one step beyond; hysteresis
+bands; latched SAFE; command acceptance and rejection; watchdog timeout and 32-bit counter
+wrap-around.
+
+## C-to-Python cross-checks (pytest, skipped if gcc is not on PATH)
+
+- `test_c_cross_check.py`: the real C encoder writes four packets (typical, minimum, maximum,
+  negative temperature); the independently written Python decoder must read every field.
+- `test_health_scenario.py`: the C health monitor runs an 11-step scenario; the Python decoder
+  checks mode and faults at each step against a table written by hand, not taken from C output.
+
+A skipped test is not a pass: check that the pytest summary shows no skips.
+
+## Limits of this testing
+
+The C code is tested on a Windows laptop with GCC only. Nothing has been run on a target
+processor, under a real-time OS, with a hardware watchdog, or in a radiation environment.

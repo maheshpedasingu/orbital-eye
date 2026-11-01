@@ -9,11 +9,10 @@
 | 5 | NASA FIRMS ingestion, validation, SQLite, map markers | Done |
 | 6 | Alert rules, deduplication, history, alerts panel, notifications | Done |
 | 7a-7c | Sentinel-2 discovery, NDVI maths, single-date NDVI map | Done |
-| 7d | NDVI change between two dates | Code and tests written; end-to-end real-data run to be confirmed |
-| 7e | NDVI time series for the AOI | Planned |
-| 8 | C/C++ mission-logic module: telemetry structs, sensor interfaces, tests | Planned |
-| 9 | Integration, logging, scheduled ingestion, documentation | Planned |
-| 10 | Hardware roadmap (sensors, power, onboard computer, ground station) | Planned |
+| 7d | NDVI change between two dates | Done. Real run 2026-11-01: overlap 47.7%, 90.1% stable, 9.3% increase, 0.6% decrease |
+| 8a-8e | C telemetry packet, Python decoder, C-to-Python cross-check, C health monitor, scripted fault scenario | Done. Laptop only, not flight-qualified |
+| 9 | Integration, logging, scheduled ingestion, current TLEs, pass API | Planned |
+| 10 | Hardware roadmap | Written: see `HARDWARE_ROADMAP.md` (a proposal, nothing built) |
 
-Also planned: current TLEs from CelesTrak (after verifying access terms), WGS-84
-geodetic latitude for ground tracks, UT1-UTC and polar motion, pass-prediction API.
+Also planned: WGS-84 geodetic latitude for ground tracks, UT1-UTC and polar motion,
+hardware abstraction layer and command message format for the C code, NDVI time series (7e).
