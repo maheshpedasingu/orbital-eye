@@ -103,3 +103,15 @@ individually), explicit units in names and comments, input validation, and compi
 - Ground-track latitude is spherical (up to about 0.2 degrees below geodetic).
 - No scheduled ingestion; refresh by running the commands in the README.
 - Flight logic is not connected to the dashboard and has no hardware abstraction layer.
+## Added in Phase 9
+
+| Module | Purpose |
+|---|---|
+| `ingestion/celestrak.py`, `tle_store.py`, `run_celestrak.py` | Current orbital elements (REAL_EXTERNAL), validated, stored, fetched at most every 12 h |
+| `orbit/geodetic.py` | WGS-84 geodetic conversion (replaces spherical latitude for validation) |
+| `orbit/validation.py` | Compares SGP4 predictions with real observation times and places |
+| `orbit/pass_predictor.py`, `passes_api.py` | Observation opportunities within half a swath of the AOI centre (PROPAGATED_FROM_REAL_TLE) |
+| `scheduler.py`, `task_log.py` | Interval-based refresh jobs, lock file, rotating log, task history |
+| `system_api.py` | `/api/system/status`: job health, overdue flags, scheduler state, data freshness |
+
+Endpoints added: `/api/passes/next`, `/api/system/status`. Dashboard panels added: next opportunities, system status.
