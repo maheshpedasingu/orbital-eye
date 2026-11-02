@@ -115,3 +115,29 @@ individually), explicit units in names and comments, input validation, and compi
 | `system_api.py` | `/api/system/status`: job health, overdue flags, scheduler state, data freshness |
 
 Endpoints added: `/api/passes/next`, `/api/system/status`. Dashboard panels added: next opportunities, system status.
+
+## Hardware abstraction layer (Phase 8f)
+
+| File | Purpose |
+|---|---|
+| `flight_core/include/hal.h`, `src/hal.c` | Interface: four function pointers (battery, temperature, time, hardware-watchdog kick) and a completeness check |
+| `flight_core/include/hal_sim.h`, `src/hal_sim.c` | SIMULATED board with injectable read failures. Not a driver for any real hardware |
+| `flight_core/include/monitor.h`, `src/monitor.c` | `mon_step()`: one monitoring cycle through the HAL (update first, then heartbeat, so a stalled loop is detected) |
+| `flight_core/tools/emit_hal_scenario.c` | The 11-step scenario run through the HAL |
+
+The HAL-driven scenario is checked byte-for-byte against the direct-call scenario. A real board needs its own
+implementation of the four functions; the hardware watchdog policy (kick after health checks, windowed watchdog)
+is a simplification here.
+
+## Hardware abstraction layer (Phase 8f)
+
+| File | Purpose |
+|---|---|
+| `flight_core/include/hal.h`, `src/hal.c` | Interface: four function pointers (battery, temperature, time, hardware-watchdog kick) and a completeness check |
+| `flight_core/include/hal_sim.h`, `src/hal_sim.c` | SIMULATED board with injectable read failures. Not a driver for any real hardware |
+| `flight_core/include/monitor.h`, `src/monitor.c` | `mon_step()`: one monitoring cycle through the HAL (update first, then heartbeat, so a stalled loop is detected) |
+| `flight_core/tools/emit_hal_scenario.c` | The 11-step scenario run through the HAL |
+
+The HAL-driven scenario is checked byte-for-byte against the direct-call scenario. A real board needs its own
+implementation of the four functions; the hardware watchdog policy (kick after health checks, windowed watchdog)
+is a simplification here.

@@ -73,3 +73,9 @@ The C code is tested on a Windows laptop with GCC only. Nothing has been run on 
 processor, under a real-time OS, with a hardware watchdog, or in a radiation environment.
 
 Last confirmed full run: 106 passed, no skips (2026-11-01).
+
+HAL tests: build `test_monitor.c` with `telemetry.c health.c hal.c hal_sim.c monitor.c` (same gcc flags) and run it.
+`test_hal_scenario.py` requires the HAL-driven scenario to be byte-identical to the direct scenario.
+
+HAL tests: build `test_monitor.c` with `telemetry.c health.c hal.c hal_sim.c monitor.c` (same gcc flags) and run it.
+`test_hal_scenario.py` requires the HAL-driven scenario to be byte-identical to the direct scenario.
