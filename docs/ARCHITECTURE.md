@@ -141,3 +141,16 @@ is a simplification here.
 The HAL-driven scenario is checked byte-for-byte against the direct-call scenario. A real board needs its own
 implementation of the four functions; the hardware watchdog policy (kick after health checks, windowed watchdog)
 is a simplification here.
+
+## Command packet (Phase 8g)
+
+| File | Purpose |
+|---|---|
+| `flight_core/include/command.h`, `src/command.c` | 8-byte command packet (sync, version, sequence, command, CRC-16), strict validation, 32-wide sequence window, feeds `hm_command()` |
+| `flight_core/tools/run_commands.c` | Reads packets from a file and prints the real receiver's verdict for each |
+| `backend/app/flight_commands.py` | Independent Python encoder written from the layout table |
+
+Receiver rules: invalid packets never consume a sequence number; a valid packet refused by the monitor does.
+Command packets are NOT authenticated. A CRC and a sequence number detect accidents and simple replays only;
+anyone who can send bytes can forge both. Real command authentication needs keyed cryptography and key
+management, which are not built. There is no resynchronisation procedure if more than 31 commands are lost.

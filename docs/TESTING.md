@@ -79,3 +79,7 @@ HAL tests: build `test_monitor.c` with `telemetry.c health.c hal.c hal_sim.c mon
 
 HAL tests: build `test_monitor.c` with `telemetry.c health.c hal.c hal_sim.c monitor.c` (same gcc flags) and run it.
 `test_hal_scenario.py` requires the HAL-driven scenario to be byte-identical to the direct scenario.
+
+Command tests: build `test_command.c` with `telemetry.c health.c command.c` (same gcc flags) and run it.
+`test_command_cross_check.py`: Python builds 10 command packets from the layout table; the real C receiver must
+return the hand-written verdict and resulting mode for each (replay, bad CRC, window edges, unknown id, refusal).
