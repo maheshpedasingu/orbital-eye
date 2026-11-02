@@ -65,3 +65,15 @@ def fetch_3le(catnr: int) -> str:
         return r.text
     except Exception as exc:
         raise RuntimeError(f"CelesTrak request failed: {exc}") from None
+
+def name_matches(returned_name: str, expected: str) -> bool:
+    """Compare satellite names ignoring case, spaces and punctuation.
+
+    'NOAA 20 (JPSS-1)' contains 'NOAA-20'; 'SENTINEL-2B' does not contain 'SENTINEL-2A'.
+    """
+    import re
+
+    def norm(text: str) -> str:
+        return re.sub(r"[^A-Z0-9]", "", text.upper())
+
+    return norm(expected) in norm(returned_name)

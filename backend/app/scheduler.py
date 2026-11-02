@@ -97,7 +97,7 @@ def task_tle(conn):
     from app.ingestion.run_celestrak import refresh_tle
     from app.orbit.pass_predictor import load_satellites
 
-    results = [refresh_tle(conn, s["catnr"]) for s in load_satellites()]
+    results = [refresh_tle(conn, s["catnr"], expected_name=s.get("expected_name")) for s in load_satellites()]
     summary = ", ".join(f"{r['catnr']}:{r['status']}" for r in results)
     if any(r["status"] == "failed" for r in results):
         errors = "; ".join(r["error"] for r in results if r["status"] == "failed")
@@ -123,8 +123,31 @@ def task_change(conn):
     return "ok", r["status"] + (f" ({r['error']})" if r.get("error") else "")
 
 
+def task_firms_all(conn):
+    from app.aoi import aoi_bbox
+    from app.config import get_firms_key
+    from app.ingestion.run_firms import ingest_firms
+    from app.orbit.pass_predictor import load_satellites
+
+    key = get_firms_key()
+    if not key:
+        return "skipped", "FIRMS_MAP_KEY is not set"
+    sources = sorted({s["firms_source"] for s in load_satellites() if s.get("firms_source")})
+    if not sources:
+        return "skipped", "no firms_source configured"
+    parts, errors = [], []
+    for source in sources:
+        r = ingest_firms(conn, key, source, aoi_bbox(pad_deg=0.5), day_range=2)
+        if r["status"] == "ok":
+            parts.append(f"{source}: valid={r['rows_valid']} new={r['rows_new']}")
+        else:
+            errors.append(f"{source}: {r['error']}")
+    summary = "; ".join(parts + errors)
+    return ("failed", summary) if errors else ("ok", summary)
+
+
 TASKS = [
-    ("firms", FIRMS_MIN_MINUTES, task_firms),
+    ("firms", FIRMS_MIN_MINUTES, task_firms_all),
     ("alerts", 0, task_alerts),
     ("tle", TLE_MIN_MINUTES, task_tle),
     ("vegetation", VEGETATION_MIN_MINUTES, task_vegetation),

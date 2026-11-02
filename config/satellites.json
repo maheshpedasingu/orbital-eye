@@ -1,17 +1,38 @@
 {
-  "note": "half_swath_km is half of the published instrument swath. Edit freely.",
+  "note": "half_swath_km is half of the published instrument swath. expected_name is checked against the name CelesTrak returns (case, spaces and punctuation ignored). firms_source is the FIRMS product carrying this satellite's detections.",
   "satellites": [
     {
-      "catnr": 42063, "name": "Sentinel-2B",
+      "catnr": 42063, "name": "Sentinel-2B", "expected_name": "SENTINEL-2B",
       "instrument": "MSI, optical, 290 km swath",
-      "half_swath_km": 145, "daylight_only": true,
-      "purpose": "NDVI imagery"
+      "half_swath_km": 145, "daylight_only": true, "purpose": "NDVI imagery"
     },
     {
-      "catnr": 37849, "name": "Suomi NPP",
+      "catnr": 40697, "name": "Sentinel-2A", "expected_name": "SENTINEL-2A",
+      "instrument": "MSI, optical, 290 km swath",
+      "half_swath_km": 145, "daylight_only": true, "purpose": "NDVI imagery"
+    },
+    {
+      "catnr": 60989, "name": "Sentinel-2C", "expected_name": "SENTINEL-2C",
+      "instrument": "MSI, optical, 290 km swath",
+      "half_swath_km": 145, "daylight_only": true, "purpose": "NDVI imagery"
+    },
+    {
+      "catnr": 37849, "name": "Suomi NPP", "expected_name": "SUOMI NPP",
       "instrument": "VIIRS, about 3040 km swath",
-      "half_swath_km": 1520, "daylight_only": false,
-      "purpose": "Fire detections"
+      "half_swath_km": 1520, "daylight_only": false, "purpose": "Fire detections",
+      "firms_source": "VIIRS_SNPP_NRT"
+    },
+    {
+      "catnr": 43013, "name": "NOAA-20", "expected_name": "NOAA-20",
+      "instrument": "VIIRS, about 3040 km swath",
+      "half_swath_km": 1520, "daylight_only": false, "purpose": "Fire detections",
+      "firms_source": "VIIRS_NOAA20_NRT"
+    },
+    {
+      "catnr": 54234, "name": "NOAA-21", "expected_name": "NOAA-21",
+      "instrument": "VIIRS, about 3040 km swath",
+      "half_swath_km": 1520, "daylight_only": false, "purpose": "Fire detections",
+      "firms_source": "VIIRS_NOAA21_NRT"
     }
   ]
 }

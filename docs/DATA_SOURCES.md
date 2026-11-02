@@ -63,3 +63,10 @@ NASA Earthdata products, MODIS imagery, CelesTrak TLEs, and Copernicus Data Spac
   We use a half-swath of 1520 km.
 - Local overpass times: Suomi NPP ascending node about 13:30 (SSEC). Sentinel-2 about 10:30 is an
   unverified expectation.
+
+## Satellites tracked (config/satellites.json)
+
+Sentinel-2A/2B/2C (imagery) and Suomi NPP, NOAA-20, NOAA-21 (VIIRS fire data). Catalogue numbers were
+written from memory; every fetch checks the returned name against `expected_name` and rejects a mismatch.
+FIRMS products ingested: VIIRS_SNPP_NRT, VIIRS_NOAA20_NRT, VIIRS_NOAA21_NRT (one request each per run).
+Independent corroboration across satellites is not yet used by the alert rules.
