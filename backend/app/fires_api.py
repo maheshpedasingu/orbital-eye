@@ -1,8 +1,9 @@
-﻿from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Query
 
 from app.aoi import aoi_bbox, load_aoi
+from app.corroboration import corroborate
 from app.geo_utils import haversine_km
 from app.storage.db import connect
 
@@ -72,3 +73,33 @@ def get_fires(days: float = Query(3.0, gt=0, le=30)):
             for r in rows
         ],
     }
+
+
+@router.get("/api/fires/corroborated")
+def get_corroborated(days: float = Query(3.0, gt=0, le=30),
+                     radius_km: float = Query(1.5, gt=0, le=10),
+                     window_minutes: float = Query(180, gt=0, le=1440)):
+    """Thermal anomalies reported by 2+ satellites at nearly the same place and time.
+
+    Stronger evidence than a single detection, but still NOT a confirmed wildfire.
+    """
+    centre = load_aoi()["features"][0]["properties"]
+    since = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+    conn = connect()
+    try:
+        rows = conn.execute(
+            "SELECT * FROM fire_detections WHERE acquired_utc >= ?"
+            " ORDER BY acquired_utc ASC", (since,)).fetchall()
+    finally:
+        conn.close()
+    clusters = corroborate(rows, radius_km=radius_km, window_minutes=window_minutes)
+    for c in clusters:
+        c["status"] = "UNCONFIRMED_THERMAL_ANOMALY"
+        c["distance_to_aoi_centre_km"] = round(haversine_km(
+            centre["centre_lat_deg"], centre["centre_lon_deg"],
+            c["latitude_deg"], c["longitude_deg"]), 1)
+    return {"data_origin": "REAL_EXTERNAL", "radius_km": radius_km,
+            "window_minutes": window_minutes, "count": len(clusters),
+            "clusters": clusters,
+            "note": "Corroboration by several satellites raises confidence "
+                    "but does not confirm a wildfire."}
