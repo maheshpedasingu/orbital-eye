@@ -1,10 +1,10 @@
-﻿from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
 from app.orbit.sat_state import argument_of_latitude_deg, ground_track, satellite_state
 from app.satellites_api import build_state, build_track
-from app.ingestion.tle_store import save_tle
+from app.ingestion.tle_store import ensure_tle_tables, save_tle
 from app.storage.db import connect
 
 NOW = datetime(2026, 11, 6, 12, 0, tzinfo=timezone.utc)
@@ -17,6 +17,7 @@ def fake_prop(l1, l2, when):
 
 
 def _save(conn, age_days):
+    ensure_tle_tables(conn)
     epoch = (NOW - timedelta(days=age_days)).isoformat()
     save_tle(conn, {"catnr": 1, "name": "X", "line1": "l1", "line2": "l2",
                     "epoch_utc": epoch}, NOW, "test")
