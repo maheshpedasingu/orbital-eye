@@ -15,3 +15,6 @@ backend/.venv312/
 
 backend/.venv312/
 backend/.venv/
+
+.venv312/
+.venv/
