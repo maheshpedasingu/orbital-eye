@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 type Point = {
   scene_id: string;
@@ -38,10 +38,15 @@ export default function NdviSeriesPanel() {
 
   const points = data?.points ?? [];
   const names = Array.from(new Set(points.flatMap((p) => Object.keys(p.category_fractions))));
-  const x = (i: number) =>
-    points.length < 2
-      ? (PAD.l + W - PAD.r) / 2
-      : PAD.l + (i / (points.length - 1)) * (W - PAD.l - PAD.r);
+  const times = points.map((p) => (p.acquired_utc ? Date.parse(p.acquired_utc) : NaN));
+  const finiteTimes = times.filter((v) => Number.isFinite(v));
+  const tMin = finiteTimes.length ? Math.min(...finiteTimes) : 0;
+  const tMax = finiteTimes.length ? Math.max(...finiteTimes) : 0;
+  const x = (i: number) => {
+    const mid = (PAD.l + W - PAD.r) / 2;
+    if (points.length < 2 || tMax === tMin || !Number.isFinite(times[i])) return mid;
+    return PAD.l + ((times[i] - tMin) / (tMax - tMin)) * (W - PAD.l - PAD.r);
+  };
   const y = (v: number) => PAD.t + (1 - v) * (H - PAD.t - PAD.b);
 
   const line = (values: (number | undefined)[]) =>
@@ -107,7 +112,7 @@ export default function NdviSeriesPanel() {
             ))}
             {points.map((p, i) => (
               <text key={p.scene_id} x={x(i)} y={H - 8} fontSize="10" fill="#9ab" textAnchor="middle">
-                {p.acquired_utc ? p.acquired_utc.slice(0, 10) : "?"}
+                {p.acquired_utc ? p.acquired_utc.slice(5, 10) : "?"}
               </text>
             ))}
           </svg>
@@ -146,7 +151,7 @@ export default function NdviSeriesPanel() {
             <p style={{ fontSize: 12 }}>Only one scene is stored, so there is no trend yet.</p>
           )}
           <p style={{ fontSize: 12, margin: "6px 0 0" }}>
-            Contains modified Copernicus Sentinel data. Points are spaced evenly, not by date.
+            Contains modified Copernicus Sentinel data. Points are placed by acquisition date (labels are MM-DD, UTC).
             Differences in coverage between scenes limit how far trends can be trusted.
           </p>
         </>
