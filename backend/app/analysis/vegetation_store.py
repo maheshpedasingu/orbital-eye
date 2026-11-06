@@ -56,3 +56,14 @@ def scene_done(conn, scene_id, decimate) -> bool:
         " AND decimate = ?", (scene_id, decimate)
     ).fetchone()
     return row is not None
+
+
+def list_ok(conn, decimate=None):
+    """All successful results, oldest first. Optionally filter by decimation."""
+    sql = "SELECT * FROM vegetation_results WHERE status = 'ok'"
+    params = []
+    if decimate is not None:
+        sql += " AND decimate = ?"
+        params.append(decimate)
+    sql += " ORDER BY id ASC"
+    return conn.execute(sql, params).fetchall()
