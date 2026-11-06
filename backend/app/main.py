@@ -105,3 +105,8 @@ app.include_router(passes_router)
 from app.system_api import router as system_router  # noqa: E402
 
 app.include_router(system_router)
+
+
+from app.satellites_api import router as satellites_router  # noqa: E402
+
+app.include_router(satellites_router)

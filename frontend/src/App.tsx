@@ -4,6 +4,7 @@ import EarthView from "./components/EarthView";
 import MapView from "./components/MapView";
 import NdviSeriesPanel from "./components/NdviSeriesPanel";
 import PassesPanel from "./components/PassesPanel";
+import SatelliteStatePanel from "./components/SatelliteStatePanel";
 import SystemStatusPanel from "./components/SystemStatusPanel";
 
 export default function App() {
@@ -12,6 +13,7 @@ export default function App() {
       <h1>ORBITAL-EYE</h1>
       <SystemStatusPanel />
       <EarthView />
+      <SatelliteStatePanel />
       <PassesPanel />
       <AlertsPanel />
       <CorroborationPanel />
