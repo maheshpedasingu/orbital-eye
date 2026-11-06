@@ -9,3 +9,6 @@ flight_core/*.exe
 flight_core/*.obj
 flight_core/*.exe
 flight_core/*.bin
+
+backend/.venv/
+backend/.venv312/
