@@ -1,6 +1,7 @@
 import AlertsPanel from "./components/AlertsPanel";
 import EarthView from "./components/EarthView";
 import MapView from "./components/MapView";
+import NdviSeriesPanel from "./components/NdviSeriesPanel";
 import PassesPanel from "./components/PassesPanel";
 import SystemStatusPanel from "./components/SystemStatusPanel";
 
@@ -12,6 +13,7 @@ export default function App() {
       <EarthView />
       <PassesPanel />
       <AlertsPanel />
+      <NdviSeriesPanel />
       <h2>Area of interest</h2>
       <MapView />
     </div>
