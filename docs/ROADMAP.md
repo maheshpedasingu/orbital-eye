@@ -21,3 +21,5 @@
 Also planned: UT1-UTC and polar motion for ground tracks, NDVI change across the whole series.
 
 NDVI change across the whole series: done (change_series.py, /api/vegetation/change/series, panel).
+
+NDVI change vs a common baseline: done (change_baseline.py, /api/vegetation/change/baseline, panel toggle).
