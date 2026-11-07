@@ -8,6 +8,7 @@ from app.analysis.change_store import (
     ensure_change_table, latest_change_any, latest_change_ok,
 )
 from app.analysis.change_series import ensure_series_table, list_series
+from app.analysis.change_baseline import ensure_baseline_table, list_baseline
 from app.storage.db import connect
 
 router = APIRouter()
@@ -82,3 +83,22 @@ def get_change_series(decimate: int = 4):
     return {"data_origin": "REAL_EXTERNAL", "count": len(pairs), "pairs": pairs,
             "note": "Illustrative thresholds. NDVI change is not a diagnosis; "
                     "low-overlap pairs are flagged and should not be trusted."}
+
+
+@router.get("/api/vegetation/change/baseline")
+def get_change_baseline(decimate: int = 4):
+    """NDVI change of every stored scene against one baseline (the best-coverage scene).
+
+    In each pair, `reference` is the baseline and `current` is the scene compared with it.
+    mean_change is scene minus baseline.
+    """
+    conn = connect()
+    try:
+        ensure_baseline_table(conn)
+        rows = list_baseline(conn, decimate)
+    finally:
+        conn.close()
+    pairs = build_change_series(rows)
+    return {"data_origin": "REAL_EXTERNAL", "count": len(pairs), "pairs": pairs,
+            "note": "Each scene is compared with one baseline. Illustrative thresholds; "
+                    "NDVI change is not a diagnosis. Low-overlap pairs should not be trusted."}
