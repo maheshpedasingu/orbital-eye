@@ -1,4 +1,5 @@
 import AlertsPanel from "./components/AlertsPanel";
+import ChangeSeriesPanel from "./components/ChangeSeriesPanel";
 import CorroborationPanel from "./components/CorroborationPanel";
 import EarthView from "./components/EarthView";
 import MapView from "./components/MapView";
@@ -18,6 +19,7 @@ export default function App() {
       <AlertsPanel />
       <CorroborationPanel />
       <NdviSeriesPanel />
+      <ChangeSeriesPanel />
       <h2>Area of interest</h2>
       <MapView />
     </div>
