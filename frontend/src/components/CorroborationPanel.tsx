@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 type Cluster = {
   satellites: string[];
@@ -20,6 +20,8 @@ type Corroborated = {
   clusters: Cluster[];
   note: string;
 };
+
+const SAT_NAMES: Record<string, string> = { N: "Suomi NPP", N20: "NOAA-20", N21: "NOAA-21" };
 
 export default function CorroborationPanel() {
   const [data, setData] = useState<Corroborated | null>(null);
@@ -62,7 +64,7 @@ export default function CorroborationPanel() {
           style={{ borderLeft: "4px solid #ffb000", padding: "2px 10px", margin: "6px 0" }}
         >
           <div>
-            <b>Seen by {c.satellites.length} satellites</b>: {c.satellites.join(", ")}
+            <b>Seen by {c.satellites.length} satellites</b>: {c.satellites.map((s) => SAT_NAMES[s] ?? s).join(", ")}
             {" "}({c.n_detections} detections, {c.data_origin})
           </div>
           <div style={{ fontSize: 12 }}>
