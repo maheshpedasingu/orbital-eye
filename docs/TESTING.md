@@ -83,3 +83,10 @@ HAL tests: build `test_monitor.c` with `telemetry.c health.c hal.c hal_sim.c mon
 Command tests: build `test_command.c` with `telemetry.c health.c command.c` (same gcc flags) and run it.
 `test_command_cross_check.py`: Python builds 10 command packets from the layout table; the real C receiver must
 return the hand-written verdict and resulting mode for each (replay, bad CRC, window edges, unknown id, refusal).
+
+
+## Test total
+
+182 tests pass (run `python -m pytest tests` from `backend`, with Python 3.12 and the
+packages in `backend/requirements.txt`). New since Phase 8g: NDVI series (4), backfill (3),
+corroboration (6), satellite state (8).

@@ -10,10 +10,12 @@
 | 6 | Alert rules, deduplication, history, alerts panel, notifications | Done |
 | 7a-7c | Sentinel-2 discovery, NDVI maths, single-date NDVI map | Done |
 | 7d | NDVI change between two dates | Done |
-| 7e | NDVI time series: series API, chart panel, backfill of past scenes | Done |
+| 7e | NDVI time series: series API, date-spaced chart, backfill of past scenes | Done |
 | 8a-8e | C telemetry packet, Python decoder, C-to-Python cross-check, C health monitor, scripted fault scenario | Done. Laptop only, not flight-qualified |
 | 8f-8g | Hardware abstraction layer, simulated board, command packet, sequence window, receiver on the health monitor, Python cross-check | Done. Laptop only, not flight-qualified |
 | 9 | Integration, logging, scheduled ingestion, current TLEs, pass API, system status panel | Done |
+| 9g | Cross-satellite corroboration of fire detections (API and panel) | Done. Corroborated is still UNCONFIRMED |
+| 10a | Real-satellite state, orbital phase and ground track endpoints, dashboard panel, globe layer | Done |
 | 10 | Hardware roadmap | Written: see `HARDWARE_ROADMAP.md` (a proposal, nothing built) |
 
-Also planned: UT1-UTC and polar motion for ground tracks.
+Also planned: UT1-UTC and polar motion for ground tracks, NDVI change across the whole series.

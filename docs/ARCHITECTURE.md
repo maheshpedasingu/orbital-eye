@@ -154,3 +154,17 @@ Receiver rules: invalid packets never consume a sequence number; a valid packet 
 Command packets are NOT authenticated. A CRC and a sequence number detect accidents and simple replays only;
 anyone who can send bytes can forge both. Real command authentication needs keyed cryptography and key
 management, which are not built. There is no resynchronisation procedure if more than 31 commands are lost.
+
+
+## Additions after Phase 9
+
+- `app/corroboration.py`: pure function grouping detections from different satellites
+  within a radius and time window. Exposed at `/api/fires/corroborated`.
+  Corroboration raises confidence but does not confirm a wildfire.
+- `app/orbit/sat_state.py` and `app/satellites_api.py`: SGP4 state (position, altitude,
+  speed, orbital phase) and ground track per satellite, at `/api/satellites/state` and
+  `/api/satellites/{catnr}/track`. Element sets older than 14 days give no position.
+- `app/analysis/vegetation_backfill.py`: processes several past Sentinel-2 scenes.
+  `/api/vegetation/series` returns one point per stored scene.
+- Frontend panels: NdviSeriesPanel, CorroborationPanel, SatelliteStatePanel, and a real
+  satellite layer in EarthView.
