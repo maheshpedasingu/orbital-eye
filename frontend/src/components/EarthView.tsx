@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { latLonToVector3 } from "../lib/geo";
@@ -53,6 +53,11 @@ export default function EarthView() {
   const [showIdeal, setShowIdeal] = useState(true);
   const [showSgp4, setShowSgp4] = useState(true);
   const [showReal, setShowReal] = useState(true);
+  const [speed, setSpeed] = useState(1);
+  const speedRef = useRef(1);
+  useEffect(() => {
+    speedRef.current = speed;
+  }, [speed]);
 
   useEffect(() => {
     visRef.current = { ideal: showIdeal, sgp4: showSgp4, real: showReal };
@@ -105,7 +110,9 @@ export default function EarthView() {
     realGroupRef.current = realGroup;
     scene.add(realGroup);
     const markers = new Map<number, THREE.Mesh>();
-    const tracked = new Set<number>();
+    const trackedAt = new Map<number, number>();
+    const trackLines = new Map<number, THREE.Line>();
+    const trackData = new Map<number, { pts: THREE.Vector3[]; t0: number; dur: number; step: number }>();
 
     let samples: TrackPoint[] = [];
     let pts: THREE.Vector3[] = [];
@@ -124,10 +131,24 @@ export default function EarthView() {
         if (cancelled) return;
         const points = (d.points ?? []) as TrackPoint[];
         if (points.length > 1) {
-          realGroup.add(makeLine(toVectors(points), colorFor(s), true));
+          const old = trackLines.get(s.catnr);
+          if (old) {
+            realGroup.remove(old);
+            old.geometry.dispose();
+          }
+          const vecs = toVectors(points);
+          trackData.set(s.catnr, {
+            pts: vecs,
+            t0: Date.now(),
+            dur: points[points.length - 1].t_s,
+            step: points[1].t_s - points[0].t_s,
+          });
+          const line = makeLine(vecs, colorFor(s), true);
+          trackLines.set(s.catnr, line);
+          realGroup.add(line);
         }
       } catch {
-        tracked.delete(s.catnr); // retry on the next refresh
+        trackedAt.delete(s.catnr); // retry on the next refresh
       }
     };
 
@@ -152,15 +173,18 @@ export default function EarthView() {
             markers.set(s.catnr, m);
             realGroup.add(m);
           }
-          m.position.copy(
-            latLonToVector3(
-              s.state.lat_deg,
-              s.state.lon_deg,
-              (EARTH_RADIUS_KM + s.state.alt_km) / EARTH_RADIUS_KM
-            )
-          );
-          if (!tracked.has(s.catnr)) {
-            tracked.add(s.catnr);
+          if (!trackData.has(s.catnr)) {
+            m.position.copy(
+              latLonToVector3(
+                s.state.lat_deg,
+                s.state.lon_deg,
+                (EARTH_RADIUS_KM + s.state.alt_km) / EARTH_RADIUS_KM
+              )
+            );
+          }
+          const last = trackedAt.get(s.catnr);
+          if (last === undefined || Date.now() - last > 300000) {
+            trackedAt.set(s.catnr, Date.now());
             loadTrack(s);
           }
         }
@@ -233,6 +257,15 @@ export default function EarthView() {
           setTelemetry({ ...samples[i], speed_km_s: speedKmS });
         }
       }
+      for (const [id, m] of markers) {
+        const td = trackData.get(id);
+        if (!td) continue;
+        const el = ((Date.now() - td.t0) / 1000) * speedRef.current;
+        const tt = el % td.dur;
+        const k = Math.min(Math.floor(tt / td.step), td.pts.length - 2);
+        const fr = (tt - k * td.step) / td.step;
+        m.position.copy(td.pts[k]).lerp(td.pts[k + 1], fr);
+      }
       controls.update();
       renderer.render(scene, camera);
       frameId = requestAnimationFrame(animate);
@@ -303,6 +336,14 @@ export default function EarthView() {
               onChange={(e) => setShowReal(e.target.checked)}
             />{" "}
             Real satellites (current TLE)
+          </label>
+          <label style={{ display: "block", fontSize: 12, marginTop: 6 }}>
+            Real satellite speed:{" "}
+            <select value={speed} onChange={(e) => setSpeed(Number(e.target.value))}>
+              <option value={1}>1x (real time)</option>
+              <option value={60}>60x</option>
+              <option value={600}>600x</option>
+            </select>
           </label>
 
           {realSats.length > 0 && (
