@@ -7,6 +7,21 @@ const EARTH_RADIUS_KM = 6378.137;
 
 type TrackPoint = { t_s: number; lat_deg: number; lon_deg: number; alt_km: number };
 type Telemetry = TrackPoint & { speed_km_s: number };
+type RealSat = {
+  catnr: number;
+  name: string;
+  purpose?: string;
+  status: string;
+  message?: string;
+  tle_age_days?: number;
+  state?: { lat_deg: number; lon_deg: number; alt_km: number };
+};
+
+const COLOR_NDVI = 0xff7f50;
+const COLOR_FIRE = 0xc792ea;
+const colorFor = (s: { purpose?: string }) =>
+  s.purpose === "NDVI imagery" ? COLOR_NDVI : COLOR_FIRE;
+const hex = (c: number) => "#" + c.toString(16).padStart(6, "0");
 
 function toVectors(points: TrackPoint[]): THREE.Vector3[] {
   return points.map((p) =>
@@ -27,19 +42,24 @@ export default function EarthView() {
   const mountRef = useRef<HTMLDivElement>(null);
   const idealLineRef = useRef<THREE.Line | null>(null);
   const sgp4LineRef = useRef<THREE.Line | null>(null);
-  const visRef = useRef({ ideal: true, sgp4: true });
+  const realGroupRef = useRef<THREE.Group | null>(null);
+  const visRef = useRef({ ideal: true, sgp4: true, real: true });
 
   const [idealStatus, setIdealStatus] = useState("Idealized track: loading...");
   const [sgp4Status, setSgp4Status] = useState("SGP4 track: loading...");
+  const [realStatus, setRealStatus] = useState("Real satellites: loading...");
+  const [realSats, setRealSats] = useState<RealSat[]>([]);
   const [telemetry, setTelemetry] = useState<Telemetry | null>(null);
   const [showIdeal, setShowIdeal] = useState(true);
   const [showSgp4, setShowSgp4] = useState(true);
+  const [showReal, setShowReal] = useState(true);
 
   useEffect(() => {
-    visRef.current = { ideal: showIdeal, sgp4: showSgp4 };
+    visRef.current = { ideal: showIdeal, sgp4: showSgp4, real: showReal };
     if (idealLineRef.current) idealLineRef.current.visible = showIdeal;
     if (sgp4LineRef.current) sgp4LineRef.current.visible = showSgp4;
-  }, [showIdeal, showSgp4]);
+    if (realGroupRef.current) realGroupRef.current.visible = showReal;
+  }, [showIdeal, showSgp4, showReal]);
 
   useEffect(() => {
     const mount = mountRef.current;
@@ -79,6 +99,14 @@ export default function EarthView() {
     marker.visible = false;
     scene.add(marker);
 
+    // Real satellites layer
+    const realGroup = new THREE.Group();
+    realGroup.visible = visRef.current.real;
+    realGroupRef.current = realGroup;
+    scene.add(realGroup);
+    const markers = new Map<number, THREE.Mesh>();
+    const tracked = new Set<number>();
+
     let samples: TrackPoint[] = [];
     let pts: THREE.Vector3[] = [];
     let times: number[] = [];
@@ -87,6 +115,64 @@ export default function EarthView() {
     const SPEED = 60; // simulated seconds per real second
 
     let cancelled = false;
+
+    const loadTrack = async (s: RealSat) => {
+      try {
+        const r = await fetch(`/api/satellites/${s.catnr}/track?minutes=95&step_s=60`);
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const d = await r.json();
+        if (cancelled) return;
+        const points = (d.points ?? []) as TrackPoint[];
+        if (points.length > 1) {
+          realGroup.add(makeLine(toVectors(points), colorFor(s), true));
+        }
+      } catch {
+        tracked.delete(s.catnr); // retry on the next refresh
+      }
+    };
+
+    const loadReal = async () => {
+      try {
+        const r = await fetch("/api/satellites/state");
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const d = await r.json();
+        if (cancelled) return;
+        const sats = d.satellites as RealSat[];
+        setRealSats(sats);
+        let shown = 0;
+        for (const s of sats) {
+          if (!s.state) continue;
+          shown += 1;
+          let m = markers.get(s.catnr);
+          if (!m) {
+            m = new THREE.Mesh(
+              new THREE.SphereGeometry(0.025, 16, 16),
+              new THREE.MeshBasicMaterial({ color: colorFor(s) })
+            );
+            markers.set(s.catnr, m);
+            realGroup.add(m);
+          }
+          m.position.copy(
+            latLonToVector3(
+              s.state.lat_deg,
+              s.state.lon_deg,
+              (EARTH_RADIUS_KM + s.state.alt_km) / EARTH_RADIUS_KM
+            )
+          );
+          if (!tracked.has(s.catnr)) {
+            tracked.add(s.catnr);
+            loadTrack(s);
+          }
+        }
+        setRealStatus(
+          `${d.data_origin}: ${shown} of ${sats.length} satellites positioned (updates every 10 s)`
+        );
+      } catch (e) {
+        if (!cancelled) setRealStatus(`Real satellites failed: ${(e as Error).message}`);
+      }
+    };
+    loadReal();
+    const realTimer = window.setInterval(loadReal, 10000);
 
     // Idealized circular orbit, same altitude/inclination as the ISS fixture TLE
     fetch("/api/orbit/ground-track?altitude_km=420&inclination_deg=51.6439&step_s=60")
@@ -155,6 +241,7 @@ export default function EarthView() {
 
     return () => {
       cancelled = true;
+      window.clearInterval(realTimer);
       cancelAnimationFrame(frameId);
       controls.dispose();
       renderer.dispose();
@@ -209,10 +296,37 @@ export default function EarthView() {
             />{" "}
             SGP4 (fixture TLE, Dec 2019)
           </label>
+          <label style={{ display: "block", color: hex(COLOR_FIRE) }}>
+            <input
+              type="checkbox"
+              checked={showReal}
+              onChange={(e) => setShowReal(e.target.checked)}
+            />{" "}
+            Real satellites (current TLE)
+          </label>
+
+          {realSats.length > 0 && (
+            <div style={{ marginTop: 10, fontSize: 12 }}>
+              {realSats.map((s) => (
+                <div key={s.catnr} style={{ color: hex(colorFor(s)) }}>
+                  &#9632; {s.name}
+                  {s.state
+                    ? ` (${s.state.alt_km.toFixed(0)} km)`
+                    : ` (${s.status})`}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
       <p style={{ margin: "8px 0 0" }}>{idealStatus}</p>
       <p style={{ margin: "4px 0 0" }}>{sgp4Status}</p>
+      <p style={{ margin: "4px 0 0" }}>{realStatus}</p>
+      <p style={{ margin: "4px 0 0", fontSize: 12 }}>
+        Real satellites: markers are the current position, lines are the next 95 minutes of
+        ground track. Both are propagated from real CelesTrak element sets and lose accuracy as
+        the element set ages. Coral = Sentinel-2, purple = VIIRS fire satellites.
+      </p>
     </div>
   );
 }
