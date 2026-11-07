@@ -19,3 +19,5 @@
 | 10 | Hardware roadmap | Written: see `HARDWARE_ROADMAP.md` (a proposal, nothing built) |
 
 Also planned: UT1-UTC and polar motion for ground tracks, NDVI change across the whole series.
+
+NDVI change across the whole series: done (change_series.py, /api/vegetation/change/series, panel).
