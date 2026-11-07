@@ -90,3 +90,5 @@ return the hand-written verdict and resulting mode for each (replay, bad CRC, wi
 182 tests pass (run `python -m pytest tests` from `backend`, with Python 3.12 and the
 packages in `backend/requirements.txt`). New since Phase 8g: NDVI series (4), backfill (3),
 corroboration (6), satellite state (8).
+
+Update: 189 tests pass after the change series (4) and baseline comparison (3) were added.
