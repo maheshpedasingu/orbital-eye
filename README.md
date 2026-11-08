@@ -364,7 +364,7 @@ A snapshot from a real run on **8 November 2026**. It shows what the system prod
 | Inertial speeds | 7.43 to 7.46 km/s |
 | Stored FIRMS detections | 7 |
 | Corroborated cluster | Suomi NPP and NOAA-21, 2 detections, 36 min apart, 78.1 km from the AOI centre, unconfirmed |
-| Sentinel-2 scenes stored | 10, from 24 May to 26 Oct 2026 |
+| Sentinel-2 scenes stored | 11, from 24 May to 26 Oct 2026 (10 compared against the baseline) |
 | Baseline | 3 Jun 2026, the scene with the highest usable NDVI (98.2%) |
 | Mean NDVI change against the baseline | -0.029 on 24 May, rising to +0.32 on 26 Oct |
 | Scene flagged low overlap | 15 Jul, 28.5% overlap, drawn hollow and not trusted |

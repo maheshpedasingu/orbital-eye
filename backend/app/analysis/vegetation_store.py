@@ -1,4 +1,4 @@
-﻿import json
+import json
 from datetime import datetime, timezone
 
 SCHEMA = """
@@ -40,7 +40,7 @@ def record_result(conn, status, collection, decimate, scene_id=None,
 
 def latest_ok(conn):
     return conn.execute(
-        "SELECT * FROM vegetation_results WHERE status = 'ok' ORDER BY id DESC LIMIT 1"
+        "SELECT * FROM vegetation_results WHERE status = 'ok' ORDER BY acquired_utc DESC, id DESC LIMIT 1"
     ).fetchone()
 
 
