@@ -38,7 +38,7 @@ If it comes as a zip, extract it to a folder such as `C:\orbital-eye`.
 If it comes from a Git repository, clone it. Use the real address and type no angle brackets:
 
 ```powershell
-git clone https://github.com/yourname/orbital-eye.git
+git clone https://github.com/maheshpedasingu/orbital-eye.git
 cd orbital-eye
 ```
 
